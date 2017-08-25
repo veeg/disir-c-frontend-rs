@@ -1,0 +1,222 @@
+syntax = "proto3";
+
+package disirpb;
+
+
+message SemanticVersion {
+    uint32 major = 1;
+    uint32 minor = 2;
+    uint32 patch = 3;
+}
+
+// User sends this UserInfo in the first message after connection is established
+message UserInfo {
+    SemanticVersion version = 1;
+    string user_agent = 2;
+}
+
+enum Status {
+    UNKNOWN = 0;
+    OK = 1;
+    INTERNAL_ERROR = 2;
+}
+
+// Server respons to a UserInfo message with this response
+message SystemInfo {
+    SemanticVersion disirpb = 1;
+    SemanticVersion libdisir = 2;
+    bool bind_accepted = 3;
+    string reason = 4;
+}
+
+message DisirValueType {
+    oneof value {
+        bool string_type = 1;
+        bool integer_type = 2;
+        bool float_type = 3;
+        bool boolean_type = 4;
+        bool enum_type = 5;
+    }
+}
+
+// function disir_mold_input()
+message DisirMoldInput {
+    string type = 1;
+    string id = 2;
+}
+
+// function disir_config_input()
+message DisirConfigInput {
+    string type = 1;
+    string id = 2;
+}
+
+message DisirMold {
+    uint64 mold_id = 1;
+    SemanticVersion version = 2;
+    string documentation = 3;
+    repeated uint64 element_ids = 4;
+}
+
+message DisirConfig {
+    uint64 config_id = 1;
+    SemanticVersion version = 2;
+    repeated uint64 element_ids = 3;
+}
+
+message MoldKeyval {
+    uint64 keyval_id = 1;
+    oneof parent {
+        uint64 parent_section_id = 20;
+        uint64 parent_mold_id = 21;
+    }
+    string name = 2;
+    DisirValueType type = 3;
+    SemanticVersion introduced = 4;
+    SemanticVersion deprecated = 5;
+    string documentation = 6;
+    repeated DisirDefault defaults = 7;
+    bool invalid = 10;
+    // XXX Missing restrictions
+}
+
+message ConfigKeyval {
+    uint64 keyval_id = 1;
+    string name = 2;
+    DisirValue value = 3;
+}
+
+message MoldSection {
+    uint64 section_id = 1;
+    oneof parent {
+        uint64 parent_section_id = 10;
+        uint64 parent_mold_id = 11;
+    }
+    string name = 2;
+    SemanticVersion introduced = 3;
+    SemanticVersion deprecated = 4;
+    string documentation = 5;
+    repeated uint64 element_ids = 6;
+}
+
+message ConfigSection {
+    uint64 section_id = 1;
+    string name = 2;
+    repeated uint64 element_ids = 3;
+}
+
+//! Building block
+message Element {
+    oneof msg {
+        MoldKeyval mold_keyval = 1;
+        MoldSection mold_section = 2;
+        ConfigKeyval config_keyval = 3;
+        ConfigSection config_section = 4;
+    }
+}
+
+message DisirDefault {
+    uint64 default_id = 1;
+    SemanticVersion introduced = 2;
+    DisirValue value = 3;
+}
+
+message DisirValue {
+    oneof value {
+        string string_value = 1;
+        bool boolean_value = 2;
+        int64 integer_value = 3;
+        double float_value = 4;
+        // Missing ENUM
+    }
+}
+
+message QueryMoldEntry {
+    string type = 1;
+    string id = 2;
+}
+
+message QueryConfigEntry {
+    string type = 1;
+    string id = 2;
+}
+
+message AddConfigEntry {
+    oneof msg {
+        ConfigKeyval keyval = 1;
+    }
+    uint64 config_id = 2;
+    uint64 parent_id = 3;
+}
+
+message QueryElement {
+    oneof msg {
+        uint64 mold_id = 1;
+        uint64 config_id = 2;
+    }
+    uint64 element_id = 3;
+}
+
+//! LibDisir Reuest message sent from the client.
+message LibDisirRequest {
+    oneof msg {
+        //! Query for available groups.
+        //! Response: group_ids
+        bool query_groups = 2;
+        //! Query all available molds for a group_id
+        //! \param string from response group_ids.
+        //! Response: mold_entry_ids
+        string query_mold_entries = 3;
+        //! Response: mold
+        QueryMoldEntry query_mold_entry = 4;
+        //! Response: none
+        uint64 close_mold_entry = 5;
+        //! Response: element
+        QueryElement query_element = 6;
+        //! Response: config
+        QueryConfigEntry query_config_entry = 7;
+        //! Response: success
+        AddConfigEntry add_config_entry = 8;
+    }
+}
+
+// LibDisir Response message sent from the server (service).
+message LibDisirResponse {
+    Status status = 1;
+    string error_string = 2;
+
+    //! Return the list of all available group ids on this instance.
+    //! Request: query_groups
+    repeated string group_ids = 10;
+    //! Request: query_mold_entries
+    repeated string mold_entry_ids = 12;
+    //! Request: query_mold_entry
+    DisirMold mold = 13;
+    //! Request: query_element
+    Element element = 14;
+    //! Request query_config_entry
+    DisirConfig config = 15;
+}
+
+// All possible messages exclusively sent from the server to the client.
+message ToClient {
+    uint64 command_identifier = 1;
+    oneof msg {
+        bool ping = 2;
+        bool pong = 3;
+        SystemInfo system_info = 4;
+        LibDisirResponse response = 5;
+    }
+}
+
+// All possible messages exclusively sent from the client to the server.
+message FromClient {
+    uint64 command_identifier = 1;
+    oneof msg {
+        bool ping = 2;
+        bool pong = 3;
+        UserInfo user_info = 4;
+        LibDisirRequest request = 5;
+    }
+}
+

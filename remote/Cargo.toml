@@ -1,0 +1,8 @@
+[package]
+name = "disir_remote"
+version = "0.1.0"
+authors = ["Vegard Sandengen <vegardsandengen@gmail.com>"]
+
+[dependencies]
+disir_c = { path = "../c" }
+protobuf = "1.2.2"

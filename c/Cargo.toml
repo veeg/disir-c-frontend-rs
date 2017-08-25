@@ -1,0 +1,7 @@
+[package]
+name = "disir_c"
+version = "0.1.0"
+authors = ["Vegard Sandengen <vegardsandengen@gmail.com>"]
+
+[dependencies]
+libc = "0.2.0"

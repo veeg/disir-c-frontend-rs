@@ -1,0 +1,12 @@
+= Disir C Frontend
+
+This is an experimental repository to implement a a remote service over the
+`disir-c` implementation using Rust.
+
+* `c/` is crate abstracting libdisirc from github.com/veeg/disir-c
+* `remote/` is a crate implementing the protobuf abstraction, handling and
+incomming message and providing a response message.
+* `src/` provides a binary that listens to a WebSocket connection,
+accepts clients and responds to the protobuf messages.
+
+

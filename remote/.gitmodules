@@ -1,0 +1,3 @@
+[submodule "disir-protobuf"]
+	path = disir-protobuf
+	url = git@github.com:veeg/disir-protobuf
